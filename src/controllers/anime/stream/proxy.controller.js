@@ -3,7 +3,7 @@ import https from "https";
 import { URL } from "url";
 
 const insecureAgent = new https.Agent({
-  rejectUnauthorized: false, // ⛔ allow self-signed or invalid SSL
+  rejectUnauthorized: false,
 });
 
 export const getVideoByProxy = async (req, res) => {
@@ -16,15 +16,22 @@ export const getVideoByProxy = async (req, res) => {
 
     const response = await axios.get(url, {
       responseType: isPlaylist ? "text" : "arraybuffer",
-      decompress: true,
-      httpsAgent: insecureAgent, // ⭐ FIX HERE
+
+      httpsAgent: insecureAgent,
+
+      // ⭐ VERY IMPORTANT — keep agent during redirects
+      maxRedirects: 5,
+      beforeRedirect: (options) => {
+        options.httpsAgent = insecureAgent;
+      },
+
       headers: {
         "user-agent":
           "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Mobile Safari/537.36",
         accept: "*/*",
-        "accept-language": "en,en-US;q=0.9,ar;q=0.8",
-        origin: "https://megacloud.blog",
+        "accept-language": "en,en-US;q=0.9",
         referer: "https://megacloud.blog/",
+        origin: "https://megacloud.blog",
         pragma: "no-cache",
         "cache-control": "no-cache",
       },
@@ -32,6 +39,7 @@ export const getVideoByProxy = async (req, res) => {
 
     let data = response.data;
 
+    // rewrite m3u8 urls
     if (isPlaylist) {
       const rewritten = data.replace(/^(?!#)(.+)$/gm, (match) => {
         const absolute = match.startsWith("http")
@@ -44,19 +52,13 @@ export const getVideoByProxy = async (req, res) => {
 
       res.setHeader("Content-Type", "application/vnd.apple.mpegurl");
       return res.send(rewritten);
-    } else {
-      res.setHeader("Content-Type", "video/mp2t");
-      return res.send(Buffer.from(data));
-    }
-  } catch (error) {
-    if (error.response) {
-      console.error(
-        "[Proxy] Upstream error:",
-        error.response.status,
-        error.response.statusText
-      );
     }
 
+    // video chunks
+    res.setHeader("Content-Type", "video/mp2t");
+    return res.send(Buffer.from(data));
+  } catch (error) {
+    console.error("[Proxy error]", error.message);
     res.status(500).send("Proxy error: " + error.message);
   }
 };
