@@ -96,7 +96,7 @@ export const login = async (req, res) => {
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Strict',
+      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'None',
       secure: process.env.NODE_ENV === 'production' ? true : false,
       maxAge: refreshTokenMaxAge,
     });
@@ -139,7 +139,7 @@ export const refreshAccessToken = async (req, res) => {
   } catch (err) {
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      sameSite:  process.env.NODE_ENV === 'production' ? 'None' : 'Strict',
+      sameSite:  process.env.NODE_ENV === 'production' ? 'None' : 'None',
       secure: process.env.NODE_ENV === 'production' ? true : false,
     });
     return res.status(403).json({ message: 'Forbidden' });
@@ -153,7 +153,7 @@ export const logout = (req, res) => {
   }
   res.clearCookie('refreshToken', {
     httpOnly: true,
-    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Strict',
+    sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'None',
     secure: process.env.NODE_ENV === 'production' ? true : false,
   });
 
