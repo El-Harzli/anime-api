@@ -14,7 +14,8 @@ const app = express();
 
 app.use(express.json());
 
-const allowedOrigins = process.env.CORS_ORIGINS.split(',');
+const allowedOrigins = process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : [];
+
 app.use(
   cors({
     origin: allowedOrigins,
@@ -28,7 +29,7 @@ app.use(`/api/${process.env.API_VERSION}/watchlist`, watchListRoute);
 app.use(`/api/${process.env.API_VERSION}`, animeRoute);
 
 connectDB().then(() => {
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`App listening on PORT : ${PORT}`);
   });
 });
